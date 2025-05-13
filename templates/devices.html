@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Devices - Device Management System{% endblock %}
+
+{% block content %}
+<div style="margin: 2rem 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 600; margin: 0;">Device List</h2>
+        <a href="{{ url_for('add_device') }}" class="btn btn-primary add-device-btn">
+            <i class="fas fa-plus"></i> Add New Device
+        </a>
+    </div>
+    
+    <form action="{{ url_for('devices') }}" method="GET" class="search-container">
+        <input type="text" name="search" class="search-input" placeholder="Search by Asset Number or Asset Name" value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Search
+        </button>
+    </form>
+    
+    <div class="device-list">
+        {% if devices %}
+        <table class="device-table">
+            <thead>
+                <tr>
+                    <th>Asset Number</th>
+                    <th>Asset Name</th>
+                    <th>Asset Type</th>
+                    <th>Purchase Cost</th>
+                    <th>Purchase Date</th>
+                    <th>Condition</th>
+                    <th>Storage</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr>
+                    <td>{{ device.asset_number }}</td>
+                    <td>{{ device.asset_name }}</td>
+                    <td>{{ device.asset_type }}</td>
+                    <td>${{ device.purchase_cost }}</td>
+                    <td>
+                        {% if device.purchase_date %}
+                            {{ device.purchase_date }}
+                        {% elif device.estimated_purchase_date_range %}
+                            {{ device.estimated_purchase_date_range }} (Estimated)
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </td>
+                    <td>{{ device.asset_condition }}</td>
+                    <td>{{ device.asset_storage }}</td>
+                    <td>
+                        <button class="btn btn-primary" style="padding: 0.5rem;" onclick="alert('{{ device.details }}')">
+                            <i class="fas fa-info-circle"></i> View
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 2rem; text-align: center;">
+            <i class="fas fa-search" style="font-size: 2rem; color: var(--border-color); margin-bottom: 1rem;"></i>
+            <p>No devices found. {% if search_query %}Try a different search term.{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
