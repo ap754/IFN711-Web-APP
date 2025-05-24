@@ -31,6 +31,7 @@
                     <th>Condition</th>
                     <th>Storage</th>
                     <th>Details</th>
+                    <th>Operation</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,6 +57,11 @@
                             <i class="fas fa-info-circle"></i> View
                         </button>
                     </td>
+                    <td>
+                        <button class="btn btn-success" style="padding: 0.5rem;" onclick="evaluateDevice('{{ device.asset_number }}', '{{ device.asset_condition }}', '{{ device.asset_type }}', '{{ device.purchase_date }}', '{{ device.estimated_purchase_date_range }}')">
+                            <i class="fas fa-calculator"></i> Evaluate
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -68,4 +74,30 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function evaluateDevice(assetNumber, condition, assetType, purchaseDate, estimatedPurchaseDateRange) {
+    fetch('/predict', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            asset_number: assetNumber,
+            condition: condition,
+            asset_type: assetType,
+            purchase_date: purchaseDate,
+            estimated_purchase_date_range: estimatedPurchaseDateRange
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Predict Price: $' + data.price.toFixed(2));
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error occurred during prediction. Please try again.');
+    });
+}
+</script>
 {% endblock %}

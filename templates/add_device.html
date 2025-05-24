@@ -8,7 +8,7 @@
     <form method="POST" action="{{ url_for('add_device') }}">
         <div class="form-group">
             <label for="asset_number" class="form-label">Asset Number</label>
-            <input type="number" id="asset_number" name="asset_number" class="form-input" required>
+            <input type="text" id="asset_number" name="asset_number" class="form-input" required>
         </div>
         
         <div class="form-group">
@@ -97,10 +97,7 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    // 额外的add_device页面特定脚本
     document.addEventListener('DOMContentLoaded', function() {
-        // 这里可以添加add_device页面特定的JavaScript代码
-        // 注意：日期选择器的初始化已经在base.html中完成
     });
 </script>
 {% endblock %}

@@ -72,16 +72,13 @@
                 }
             }
             
-            // 使用Flatpickr初始化所有日期输入字段，并设置为英文界面
             const dateInputs = document.querySelectorAll('input[type="date"]');
             dateInputs.forEach(input => {
-                // 将原生日期输入字段转换为文本字段，以便Flatpickr可以正常工作
                 input.type = 'text';
                 
-                // 初始化Flatpickr，并设置为英文界面
                 flatpickr(input, {
                     dateFormat: 'Y-m-d',
-                    locale: 'en',  // 强制使用英文界面
+                    locale: 'en',  
                     allowInput: true
                 });
             });

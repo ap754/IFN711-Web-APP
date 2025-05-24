@@ -1,6 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 import pymysql
 import os
+import joblib
+import pandas as pd
+import numpy as np
 from datetime import datetime
 
 app = Flask(__name__)
@@ -35,7 +38,7 @@ def init_db():
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS devices (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                asset_number BIGINT NOT NULL,
+                asset_number VARCHAR(100) NOT NULL,
                 asset_name VARCHAR(100) NOT NULL,
                 asset_type VARCHAR(50) NOT NULL,
                 purchase_cost FLOAT NOT NULL,
@@ -187,6 +190,74 @@ def add_device():
             conn.close()
     
     return render_template('add_device.html')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json
+    
+    # Get device information
+    asset_number = str(data.get('asset_number', ''))
+    condition = data.get('condition', '')
+    asset_type = data.get('asset_type', '')
+    purchase_date = data.get('purchase_date', '')
+    estimated_purchase_date_range = data.get('estimated_purchase_date_range', '')
+    
+    # Calculate Age
+    age = 0
+    if purchase_date and purchase_date != 'None':
+        # Extract year and calculate age
+        year = int(purchase_date.split('-')[0])
+        age = 2025 - year
+    elif estimated_purchase_date_range and estimated_purchase_date_range != 'None':
+        # Process estimated date range
+        date_range = estimated_purchase_date_range
+        if 'to' in date_range:
+            parts = date_range.split('to')
+            start_year = int(parts[0].strip().split('-')[0])
+            end_year = int(parts[1].strip().split('-')[0])
+            avg_year = (start_year + end_year) / 2
+            age = 2025 - avg_year
+    
+    # Use model to predict price
+    try:
+        # Map function parameters to device information
+        part_number = asset_number
+        storage_type = asset_type
+        
+        # Create dataframe for prediction
+        input_data = pd.DataFrame({
+            'Age': [age],
+            'Condition': [condition],
+            'Storage Type': [storage_type],
+            'Part Number': [part_number]
+        })
+        
+        # Load model
+        model_path = os.path.join(app.static_folder, 'models', 'price_model.pkl')
+        pipeline = joblib.load(model_path)
+        
+        print(type(pipeline))
+        # Try to bypass Pipeline and use components directly
+        try:
+            # Use separate components of the Pipeline for prediction
+            preprocessor = pipeline.named_steps['preprocessor']
+            regressor = pipeline.named_steps['regressor']
+            
+            # Manually preprocess and predict
+            X_processed = preprocessor.transform(input_data)
+            predicted_price = regressor.predict(X_processed)[0]
+        except Exception as inner_e:
+            print(f"Predict Error: {str(inner_e)}")
+            # If the above method fails, try direct prediction
+            predicted_price = pipeline.predict(input_data)[0]
+        
+        return jsonify({'price': float(predicted_price)})
+    except Exception as e:
+        print(f"Predict Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
